@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .table {
+            width: 100%;
+            margin-top: 2%;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .button {
+            padding: 5px 10px;
+            margin: 2px;
+            background-color: #f2f2f2;
+            border: 1px solid rgba(0, 0, 0, 0.751);
+            cursor: pointer;
+        }
+        
+    </style>
+</head>
+<body>
+    <h1>News List</h1>
+    <div class="table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Likes</th>
+                    <th>Date Updated</th>
+                    <th>Date Created</th>
+                    <th><a href="create_news.html"><button class="button create">Create</button></a></th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableBody = document.querySelector('.table tbody');
+        
+            function fetchNews() {
+                fetch('https://btu-exam-cb6c3fdf3b9d.herokuapp.com/news')
+                    .then(response => response.json())
+                    .then(data => {
+                        tableBody.innerHTML = '';
+                        data.forEach((news, index) => addNewRow(news, index + 1));
+                        updateRowNumbers();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        
+            function addNewRow(news, displayIndex) {
+                const newRow = tableBody.insertRow();
+                newRow.dataset.id = news.id;
+                newRow.innerHTML = `
+                    <td class="row-number">${displayIndex}</td>
+                    <td>${news.title}</td>
+                    <td>${news.category}</td>
+                    <td>${news.likes || 0}</td>
+                    <td>${news.dateUpdated || 'N/A'}</td>
+                    <td>${news.dateCreated || 'N/A'}</td>
+                    <td>
+                        <button class="button delete" data-id="${news.id}">Delete</button>
+                        <button class="button update" data-id="${news.id}">Update</button>
+                    </td>
+                `;
+                newRow.querySelector('.delete').addEventListener('click', deleteNews);
+                newRow.querySelector('.update').addEventListener('click', updateNews);
+            }
+        
+            function deleteNews(event) {
+                const id = event.target.dataset.id;
+                fetch(`https://btu-exam-cb6c3fdf3b9d.herokuapp.com/news/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        const row = event.target.closest('tr');
+                        row.style.transition = 'opacity 0.5s';
+                        row.style.opacity = 0;
+                        setTimeout(() => {
+                            row.remove();
+                            updateRowNumbers();
+                        }, 500);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        
+            function updateNews(event) {
+                const id = event.target.dataset.id;
+                window.location.href = `create_news.html?id=${id}`;
+            }
+        
+            function updateRowNumbers() {
+                const rows = tableBody.querySelectorAll('tr');
+                rows.forEach((row, index) => {
+                    const numberCell = row.querySelector('.row-number');
+                    if (numberCell) {
+                        numberCell.textContent = index + 1;
+                    }
+                });
+            }
+        
+            fetchNews();
+        });
+    </script>
+</body>
+</html>
